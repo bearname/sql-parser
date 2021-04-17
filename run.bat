@@ -1,0 +1,1 @@
+java -jar build\libs\gs-gradle-0.1.0.jar example.sql

@@ -5,10 +5,7 @@ import com.sqlparser.model.JoinType;
 import com.sqlparser.model.Limit;
 import com.sqlparser.model.Query;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class AnalyzerService {
+public class SqlAnalyzer {
     public static final char ALL_COLUMNS_CHAR = '*';
     public static final char WHITESPACE = ' ';
 
@@ -32,8 +29,7 @@ public class AnalyzerService {
     private final int QUERY_LENGTH;
     public static final String DESC = " DESC";
 
-    public AnalyzerService(String sqlQueryInput) {
-//        this.sqlQueryInput = sqlQueryInput.toUpperCase();
+    public SqlAnalyzer(String sqlQueryInput) {
         this.sqlQueryInput = sqlQueryInput;
         this.QUERY_LENGTH = sqlQueryInput.length();
     }
@@ -43,15 +39,11 @@ public class AnalyzerService {
             throw new Exception("Query isEmpty");
         }
         if (sqlQueryInput.charAt(QUERY_LENGTH - 1) != ';') {
-            throw new Exception("Query must contains ';' at the end");
+            throw new Exception("Query must contains ';' at the end. " + sqlQueryInput);
         }
         checkSelectAggregateColumns();
         checkFromTableExpressions();
-        //TODO inner, left, right, full join
-        final Join join = checkJoinTable();
-        if (join != null) {
-            query.setJoin(join);
-        }
+        checkJoinTable();
         checkWhereTableExpressions();
         checkGroupBy();
         checkOrderBy();
@@ -60,39 +52,40 @@ public class AnalyzerService {
         return query;
     }
 
-    private Join checkJoinTable() throws Exception {
+    private void checkJoinTable() throws Exception {
         char token = sqlQueryInput.charAt(this.position);
-        final JoinType joinType = getJoinType(token);
-        if (joinType == null) {
-            return null;
-        }
-        token = getNextTokeSkippingWhiteSpace(token);
-        final String joinTable = parseColumnRef(token);
-        token = getNextTokeSkippingWhiteSpace(token);
-        if (joinTable.isEmpty() || token != 'O' || getToken(1) != 'N' || getToken(2) != ' ') {
-            return null;
-        }
+        if (token != QUERY_END_SYMBOL) {
+            final JoinType joinType = getJoinType(token);
+            if (joinType == null) {
+                return;
+            }
+            token = getNextTokeSkippingWhiteSpace(token);
+            final String joinTable = parseColumnRef(token);
+            token = getNextTokeSkippingWhiteSpace(token);
+            if (joinTable.isEmpty() || token != 'O' || getToken(1) != 'N' || getToken(2) != ' ') {
+                return;
+            }
 
-        shiftPosition(2);
-        token = getNextTokeSkippingWhiteSpace(getToken(2));
-        final String joinLeftTableKey = parseColumnRef(token);
-        token = getNextTokeSkippingWhiteSpace(getCurrentToken());
-        if (token != '=') {
-            return null;
-        }
-        token = getNextToken();
-        if (token != ' ') {
-            return null;
-        }
-        if (sqlQueryInput.charAt(this.position + 1) == ' ') {
-            token = getCharIgnoringRedundantWhitespace(this.position);
-        } else {
+            shiftPosition(2);
+            token = getNextTokeSkippingWhiteSpace(getToken(2));
+            final String joinLeftTableKey = parseColumnRef(token);
+            token = getNextTokeSkippingWhiteSpace(getCurrentToken());
+            if (token != '=') {
+                return;
+            }
             token = getNextToken();
+            if (token != ' ') {
+                return;
+            }
+            if (sqlQueryInput.charAt(this.position + 1) == ' ') {
+                token = getCharIgnoringRedundantWhitespace(this.position);
+            } else {
+                token = getNextToken();
+            }
+
+            final String joinRightTableKey = parseColumnRef(token);
+            query.setJoin(new Join(joinType, joinTable, joinLeftTableKey, joinRightTableKey));
         }
-
-        final String joinRightTableKey = parseColumnRef(token);
-
-        return new Join(joinType, joinTable, joinLeftTableKey, joinRightTableKey);
     }
 
     private char getToken(int offset) {
@@ -235,7 +228,7 @@ public class AnalyzerService {
                     if (token == ' ') {
                         token = getCharIgnoringRedundantWhitespace(this.position);
                     }
-                    s.append(", " + parseColumnRef(token));
+                    s.append(", ").append(parseColumnRef(token));
                     token = getCurrentToken();
                     if (token == ' ') {
                         token = getCharIgnoringRedundantWhitespace(this.position);
@@ -383,6 +376,7 @@ public class AnalyzerService {
             result.append("NOT");
 
             String value = parseExpression(token);
+            result.append(value);
         } else if (token == '(') {
             result.append(token);
             String value = parseExpression(token);
@@ -433,12 +427,11 @@ public class AnalyzerService {
                         this.sqlQueryInput.charAt(this.position + 3) == '(') {
                     this.position += 4;
                     nextToken = getNextToken();
-                    final String s = parseSummand(nextToken);
+                    final String s = parseSummOperation(nextToken);
                     nextToken = this.getCurrentToken();
                     if (nextToken != ')') {
                         throwExpectedToken(nextToken, ")");
                     }
-//                    result.append(s);
                     result.append("IN ").append(startPosition).append(" ").append(s);
 
                 } else if (nextToken == 'L' && this.sqlQueryInput.charAt(this.position + 1) == 'I' &&
@@ -447,7 +440,6 @@ public class AnalyzerService {
                     this.position += 4;
                     nextToken = getNextToken();
                     final String value = parseOperand(nextToken);
-                    nextToken = this.getCurrentToken();
                     result.append("LIKE ").append(startPosition).append(" ").append(value);
                 } else if (nextToken == 'B' && this.sqlQueryInput.charAt(this.position + 1) == 'E' &&
                         this.sqlQueryInput.charAt(this.position + 2) == 'T' &&
@@ -471,7 +463,6 @@ public class AnalyzerService {
                         this.position += 5;
                         nextToken = getNextToken();
                         s = parseOperand(nextToken);
-                        nextToken = this.getCurrentToken();
                         result.append(s);
                     } else {
                         throwExpectedToken(token, " AND ");
@@ -487,30 +478,28 @@ public class AnalyzerService {
     private String parseOperand(final char token) throws Exception {
         StringBuilder result = new StringBuilder();
 
-        String factor = parseSummand(token);
+        String factor = parseSummOperation(token);
 
         result.append(factor);
-//        char nextToken = sqlQueryInput.charAt(token);
         char nextToken = getNextToken();
 
         if (this.position < this.QUERY_LENGTH - 1 - 3) {
             if (nextToken == '|' || sqlQueryInput.charAt(this.position + 1) == '|') {
                 result.append("||");
-                result.append(parseSummand(getNextToken()));
+                result.append(parseSummOperation(getNextToken()));
             }
         }
 
         return result.toString();
     }
 
-    private String parseSummand(final char token) throws Exception {
+    private String parseSummOperation(final char token) throws Exception {
         StringBuilder result = new StringBuilder();
 
         String factor = parseFactor(token);
         result.append(factor);
 
         char nextToken = getCurrentToken();
-//        char nextToken = getNextToken();
 
         if (nextToken == '+' || nextToken == '-') {
             result.append(nextToken);
@@ -713,14 +702,24 @@ public class AnalyzerService {
                 query.addColumn(aggregateColumn);
                 if (charAt == ' ') {
                     charAt = getCharIgnoringRedundantWhitespace(this.position);
+                } else {
+                    charAt = getCurrentToken();
                 }
-                charAt = getCurrentToken();
             }
         }
     }
 
     private void checkFromTableExpressions() throws Exception {
-        char charAt = getCharIgnoringRedundantWhitespace(this.position);
+        char charAt = sqlQueryInput.charAt(position);
+        if (charAt == ' ' && position + 1 < sqlQueryInput.length() - 2) {
+            if (sqlQueryInput.charAt(position + 1) == ' ') {
+                while (charAt == ' ') {
+                    charAt = getNextToken();
+                }
+            } else {
+                charAt = getNextToken();
+            }
+        }
         final int i = QUERY_LENGTH - FROM.length() - 1 - 1 - 1 - 1;
         if (this.position > i || (charAt != 'F')) {
             throwInvalidToken(charAt, position);
@@ -728,8 +727,6 @@ public class AnalyzerService {
 
         checkKeyWord(charAt, FROM);
         String sourceTable = getAggregateColumn();
-        List<String> sources = new ArrayList<>();
-        sources.add(sourceTable);
         this.query.addFromSource(sourceTable);
         charAt = getCharIgnoringRedundantWhitespace(position);
 
@@ -737,11 +734,11 @@ public class AnalyzerService {
             this.position++;
             sourceTable = getAggregateColumn();
             this.query.addFromSource(sourceTable);
-            sources.add(sourceTable);
             if (charAt == ' ') {
                 charAt = getCharIgnoringRedundantWhitespace(this.position);
+            } else {
+                charAt = getCurrentToken();
             }
-            charAt = getCurrentToken();
         }
     }
 
@@ -761,8 +758,6 @@ public class AnalyzerService {
     }
 
     private String getAggregateColumn() throws Exception {
-//        char charAt = getCharIgnoringRedundantWhitespace(position);
-
         StringBuilder aggregateColumns = new StringBuilder();
         boolean isQuotedName = false;
         char charAt = getCharIgnoringRedundantWhitespace(position);
@@ -822,9 +817,7 @@ public class AnalyzerService {
             }
         }
 
-        final String s = aggregateColumns.toString();
-        charAt = sqlQueryInput.charAt(position);
-        return s;
+        return aggregateColumns.toString();
     }
 
     private char getCharIgnoringRedundantWhitespace(char charAt) throws Exception {
