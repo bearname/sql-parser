@@ -1,0 +1,237 @@
+{
+  "id": 2112597286,
+  "categoryId": 101,
+  "locationId": 650400,
+  "metroId": 2048,
+  "metroType": "text",
+  "districtId": 785,
+  "sharing": {
+    "fb": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286?utm_campaign=fb&utm_medium=item_page_mavnew&utm_source=soc_sharing",
+    "gp": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286?utm_campaign=gp&utm_medium=item_page_mavnew&utm_source=soc_sharing",
+    "lj": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286?utm_campaign=lj&utm_medium=item_page_mavnew&utm_source=soc_sharing",
+    "mm": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286?utm_campaign=mm&utm_medium=item_page_mavnew&utm_source=soc_sharing",
+    "native": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286?utm_campaign=native&utm_medium=item_page_mavnew&utm_source=soc_sharing",
+    "ok": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286?utm_campaign=ok&utm_medium=item_page_mavnew&utm_source=soc_sharing",
+    "tw": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286?utm_campaign=tw&utm_medium=item_page_mavnew&utm_source=soc_sharing",
+    "vk": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286?utm_campaign=vk&utm_medium=item_page_mavnew&utm_source=soc_sharing",
+    "url": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286"
+  },
+  "coords": {
+    "lat": 55.767327,
+    "lng": 49.135142
+  },
+  "shouldShowMapPreview": true,
+  "address": "Республика Татарстан, Казань, ул. Хади Такташа, 121",
+  "geoReferences": [
+    {
+      "content": "Суконная слобода",
+      "after": " 1,1 км",
+      "colors": [
+        "#0A6F20"
+      ]
+    }
+  ],
+  "title": "Asus Gaming VG248QG",
+  "userType": "private",
+  "time": 1617741712,
+  "description": "Asus Gaming VG248QG, 24\" и 144 Гц. G-sync, FreeSync, ELMB. Полный комплект (чек, коробка, кабель DisplayPort), с наклейками. Нет битых пикселей. Состояние нового. Покупка от 27.03.21, доставлен 31.03.21.",
+  "advertOptions": [],
+  "parameters": {
+    "flat": [
+      {
+        "title": "Вид товара",
+        "description": "Мониторы"
+      },
+      {
+        "title": "Состояние",
+        "description": "Б/у"
+      },
+      {
+        "title": "Категория",
+        "description": "Товары для компьютера"
+      }
+    ],
+    "groups": []
+  },
+  "images": [
+    {
+      "432x324": "https://87.img.avito.st/image/1/ivTglrayJh22M6wa-JTi5QY1JhtANyQ",
+      "240x180": "https://87.img.avito.st/image/1/ivTglrayJh22Nswd-JTi5QY1JhtANyQ",
+      "140x105": "https://87.img.avito.st/image/1/ivTglrayJh3ON_Ye-JTi5QY1JhtANyQ",
+      "100x75": "https://87.img.avito.st/image/1/ivTglrayJh2eNLIe-JTi5QY1JhtANyQ",
+      "1280x960": "https://87.img.avito.st/image/1/ivTglrayJh3WIaQQ-JTi5QY1JhtANyQ",
+      "640x480": "https://87.img.avito.st/image/1/ivTglrayJh3WP-QY-JTi5QY1JhtANyQ"
+    },
+    {
+      "240x180": "https://00.img.avito.st/image/1/3UCsLLaycan6jJupmi-1UUqPca8MjXM",
+      "140x105": "https://00.img.avito.st/image/1/3UCsLLaycamCjaGqmi-1UUqPca8MjXM",
+      "100x75": "https://00.img.avito.st/image/1/3UCsLLaycanSjuWqmi-1UUqPca8MjXM",
+      "1280x960": "https://00.img.avito.st/image/1/3UCsLLaycamam_Okmi-1UUqPca8MjXM",
+      "640x480": "https://00.img.avito.st/image/1/3UCsLLaycamahbOsmi-1UUqPca8MjXM",
+      "432x324": "https://00.img.avito.st/image/1/3UCsLLaycan6ifuumi-1UUqPca8MjXM"
+    }
+  ],
+  "price": {
+    "title": "Цена",
+    "value": "15 500",
+    "value_signed": "15 500 ₽",
+    "metric": "₽"
+  },
+  "seller": {
+    "title": "Частное лицо",
+    "name": "Вадим",
+    "registrationTime": 1524394017,
+    "connection": {
+      "title": "Подтверждён",
+      "sources": [
+        {
+          "type": "phone"
+        },
+        {
+          "type": "email"
+        }
+      ]
+    },
+    "link": "ru.avito://1/user/profile?userKey=e492a0d39c49d05d5693db5b4f970ac7&context=H4sIAAAAAAAAA0u0MrKqLgYSSpkpStaZVkaGhkamluZGFmbWxVbGVkrFRclKQJYJUL4kNVfJuhYAOYfR9zEAAAA",
+    "images": {
+      "24x24": "https://www.avito.st/stub_avatars/%D0%92/15_24x24.png",
+      "36x36": "https://www.avito.st/stub_avatars/%D0%92/15_36x36.png",
+      "48x48": "https://www.avito.st/stub_avatars/%D0%92/15_48x48.png",
+      "64x64": "https://www.avito.st/stub_avatars/%D0%92/15_64x64.png",
+      "72x72": "https://www.avito.st/stub_avatars/%D0%92/15_72x72.png",
+      "96x96": "https://www.avito.st/stub_avatars/%D0%92/15_96x96.png",
+      "128x128": "https://www.avito.st/stub_avatars/%D0%92/15_128x128.png",
+      "192x192": "https://www.avito.st/stub_avatars/%D0%92/15_192x192.png",
+      "256x256": "https://www.avito.st/stub_avatars/%D0%92/15_256x256.png"
+    },
+    "postfix": "Частное лицо",
+    "userHashId": "134863970",
+    "online": false,
+    "replyTime": {
+      "category": 3,
+      "text": "Отвечает за несколько часов"
+    },
+    "rating": {
+      "score": 5,
+      "scoreFloat": 5,
+      "text": "1 отзыв"
+    },
+    "isVerified": false,
+    "subscribeInfo": {
+      "isSubscribed": false
+    },
+    "userHash": "e492a0d39c49d05d5693db5b4f970ac7"
+  },
+  "video": {
+    "videoUrl": "https://www.youtube.com/embed/RQfBp5e8W7I",
+    "videoImages": {
+      "1280x960": "https://76.img.avito.st/video/1280x960/10865944776.jpg",
+      "640x480": "https://76.img.avito.st/video/640x480/10865944776.jpg",
+      "432x324": "https://76.img.avito.st/image/1/FUCsI7auo6n6hjOuiiNyUUqAuw",
+      "240x180": "https://76.img.avito.st/image/1/FUCsI7a2o6n6g1OpiiNyUUqAuaMSYLhDGIC7",
+      "140x105": "https://76.img.avito.st/video/140x105/10865944776.jpg",
+      "100x75": "https://76.img.avito.st/image/1/FUCsI7auo6nSgS2qiiNyUUqAuw"
+    }
+  },
+  "stats": {
+    "views": {
+      "today": 83,
+      "total": 125
+    }
+  },
+  "contacts": {
+    "list": [
+      {
+        "type": "phone",
+        "value": {
+          "title": "Позвонить",
+          "uri": "ru.avito://1/phone/get?itemId=2112597286"
+        }
+      },
+      {
+        "type": "messenger",
+        "value": {
+          "title": "Написать",
+          "uri": "ru.avito://1/item/channel/create?itemId=2112597286"
+        }
+      }
+    ]
+  },
+  "firebaseParams": {
+    "itemID": "2112597286",
+    "itemPrice": "15500",
+    "withDelivery": "0",
+    "type_of_trade": "Продаю своё",
+    "vid_tovara": "Мониторы",
+    "userAuth": "0",
+    "isShop": "0",
+    "isASDClient": "0",
+    "vertical": "GENERAL",
+    "categoryId": "101",
+    "categorySlug": "tovary_dlya_kompyutera",
+    "microCategoryId": "583",
+    "locationId": "650400"
+  },
+  "needToCheckCreditInfo": true,
+  "adjustParams": {
+    "categoryId": "101",
+    "vertical": "GENERAL",
+    "microCategoryId": "583"
+  },
+  "needToCheckSimilarItems": true,
+  "marketplaceRenameBadge": false,
+  "icebreakers": {
+    "texts": [
+      {
+        "id": 10701401,
+        "previewText": "Ещё продаёте?",
+        "messageText": "Здравствуйте! Ещё продаёте?",
+        "uri": "ru.avito://1/item/channel/create?itemId=2112597286&messageDraft=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%95%D1%89%D1%91+%D0%BF%D1%80%D0%BE%D0%B4%D0%B0%D1%91%D1%82%D0%B5%3F"
+      },
+      {
+        "id": 10701402,
+        "previewText": "Торг уместен?",
+        "messageText": "Здравствуйте! Скажите, торг уместен?",
+        "uri": "ru.avito://1/item/channel/create?itemId=2112597286&messageDraft=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%A1%D0%BA%D0%B0%D0%B6%D0%B8%D1%82%D0%B5%2C+%D1%82%D0%BE%D1%80%D0%B3+%D1%83%D0%BC%D0%B5%D1%81%D1%82%D0%B5%D0%BD%3F"
+      },
+      {
+        "id": 10701403,
+        "previewText": "Отправите Авито Доставкой?",
+        "messageText": "Здравствуйте! Сможете отправить Авито Доставкой? Тут написано, как она работает: https://support.avito.ru/categories/115000474347.",
+        "uri": "ru.avito://1/item/channel/create?itemId=2112597286&messageDraft=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%A1%D0%BC%D0%BE%D0%B6%D0%B5%D1%82%D0%B5+%D0%BE%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%B8%D1%82%D1%8C+%D0%90%D0%B2%D0%B8%D1%82%D0%BE+%D0%94%D0%BE%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%BE%D0%B9%3F+%D0%A2%D1%83%D1%82+%D0%BD%D0%B0%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%BE%2C+%D0%BA%D0%B0%D0%BA+%D0%BE%D0%BD%D0%B0+%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0%D0%B5%D1%82%3A+https%3A%2F%2Fsupport.avito.ru%2Fcategories%2F115000474347."
+      },
+      {
+        "id": 10701404,
+        "previewText": "Когда можно посмотреть?",
+        "messageText": "Здравствуйте! Когда можно посмотреть?",
+        "uri": "ru.avito://1/item/channel/create?itemId=2112597286&messageDraft=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%9A%D0%BE%D0%B3%D0%B4%D0%B0+%D0%BC%D0%BE%D0%B6%D0%BD%D0%BE+%D0%BF%D0%BE%D1%81%D0%BC%D0%BE%D1%82%D1%80%D0%B5%D1%82%D1%8C%3F"
+      }
+    ],
+    "contact": "Спросите у продавца"
+  },
+  "seo": {
+    "title": "Asus Gaming VG248QG купить в Казани | Бытовая электроника | Авито",
+    "description": "Asus Gaming VG248QG: объявление о продаже в Казани на Авито. Asus Gaming VG248QG, 24\" и 144 Гц. G-sync, FreeSync, ELMB. Полный комплект (чек, коробка, кабель DisplayPort), с наклейками. Нет битых пикселей. Состояние нового. Покупка от 27.03.21, доставлен 31.03.21.",
+    "canonicalUrl": "https://www.avito.ru/kazan/tovary_dlya_kompyutera/asus_gaming_vg248qg_2112597286"
+  },
+  "customerValue": 0.43,
+  "breadcrumbs": [
+    {
+      "name": "Товары для компьютера",
+      "title": "Товары для компьютера в Казани",
+      "url": "/kazan/tovary_dlya_kompyutera",
+      "deeplink": "ru.avito://1/items/search?categoryId=101&locationId=650400"
+    },
+    {
+      "name": "Мониторы",
+      "title": "Мониторы",
+      "url": "/kazan/tovary_dlya_kompyutera/monitory-ASgBAgICAUTGB4Bo",
+      "deeplink": "ru.avito://1/items/search?params%5B483%5D=6656&categoryId=101&locationId=650400"
+    }
+  ],
+  "viewItemAndBuyerEventsParams": {
+    "item_id": "2112597286",
+    "item_location_id": "General",
+    "logcat": "Electronics"
+  }
+}

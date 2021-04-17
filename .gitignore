@@ -1,0 +1,7 @@
+target
+build
+node_modules
+.idea
+.gradle
+docs/Swagger_UI_files
+docs/Swagger UI.html
