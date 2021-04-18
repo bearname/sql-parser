@@ -64,7 +64,6 @@ public class SqlAnalyzer {
         checkWhereTableExpressions();
         //TODO having support,
         // multiple 'OR' and 'AND' operator
-        // subquery,
         // function,
 
         checkGroupBy();
