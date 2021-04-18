@@ -76,7 +76,6 @@ public class SqlAnalyzer {
         return query;
     }
 
-
     private void checkSelectAggregateColumns() throws Exception {
         char charAt = sqlQueryInput.charAt(position);
         checkKeyWord(charAt, SELECT);
@@ -528,7 +527,8 @@ public class SqlAnalyzer {
                 String operandSecond = parseOperand(currentToken);
                 result.append(compareOperand).append(' ').append(operandSecond);
             } else if (currentToken == 'I') {
-                if (this.sqlQueryInput.charAt(this.position + 1) == 'S') {
+                final char nextToken = this.sqlQueryInput.charAt(this.position + 1);
+                if (nextToken == 'S') {
                     result.append(" IS ");
                     currentToken = getNextToken();
                     if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
@@ -546,6 +546,28 @@ public class SqlAnalyzer {
                     } else {
                         throw new Exception("Invalid query");
                     }
+                } else if (this.sqlQueryInput.charAt(this.position + 1) == 'N' &&
+                        this.sqlQueryInput.charAt(this.position + 2) == ' ' &&
+                        this.sqlQueryInput.charAt(this.position + 3) == '(') {
+                    int startPosition = this.position;
+                    this.position += 4;
+                    currentToken = getCurrentToken();
+                    String  operand = null;
+                    try {
+                        operand = parseOperand(currentToken);
+                        this.position--;
+                    } catch (Exception exception) {
+                        final String message = exception.getMessage();
+                        if (message.substring(message.length() - 1 - 3).equals("')'")) {
+                            throw new Exception(message);
+                        }
+                    }
+                    currentToken = this.getCurrentToken();
+                    if (currentToken != ')') {
+                        throwExpectedToken(currentToken, ")");
+                    }
+                    result.append("IN ").append(startPosition).append(" ").append(operand);
+                    this.position--;
                 }
             } else {
                 if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
@@ -566,13 +588,12 @@ public class SqlAnalyzer {
                         this.sqlQueryInput.charAt(this.position + 3) == '(') {
                     this.position += 4;
                     currentToken = getNextToken();
-                    final String s = parseSummOperation(currentToken);
+                    final String operand = parseOperand(currentToken);
                     currentToken = this.getCurrentToken();
                     if (currentToken != ')') {
                         throwExpectedToken(currentToken, ")");
                     }
-                    result.append("IN ").append(startPosition).append(" ").append(s);
-
+                    result.append("IN ").append(startPosition).append(" ").append(operand);
                 } else if (currentToken == 'L' && this.sqlQueryInput.charAt(this.position + 1) == 'I' &&
                         this.sqlQueryInput.charAt(this.position + 2) == 'K' &&
                         this.sqlQueryInput.charAt(this.position + 3) == 'E') {
@@ -610,8 +631,6 @@ public class SqlAnalyzer {
                     }
                 }
             }
-
-
         }
         return result.toString();
     }
@@ -717,21 +736,17 @@ public class SqlAnalyzer {
     private String parseTermValue(char token) throws Exception {
         StringBuilder result = new StringBuilder();
         final String value = parseValue(token);
-//        int startPosition = this.position;
         if (!value.isEmpty()) {
             result.append(value);
         } else {
-//            this.position = startPosition;
             final String columnRef = parseColumnRef(token);
             if (!columnRef.isEmpty()) {
                 result.append(columnRef);
             } else {
-//                this.position = startPosition;
                 final String rowValueConstructor = rowValueConstructor(token);
                 if (!rowValueConstructor.isEmpty()) {
                     result.append(rowValueConstructor);
                 } else {
-//                    this.position = startPosition;
                     if (token == '(') {
                         final String operand = parseOperand(token);
                         final char nextToken = getNextToken();
@@ -871,7 +886,7 @@ public class SqlAnalyzer {
                 result.append(token);
                 token = getNextToken();
             } while (isDigit(token) && this.position < this.QUERY_LENGTH - 2);
-            if (token != ' ' && this.position == this.QUERY_LENGTH - 2) {
+            if ((token != ' ') &&  this.position == this.QUERY_LENGTH - 2) {
                 throw new Exception("Invalid digit. Position " + this.position);
             }
             return result.toString();
