@@ -529,45 +529,34 @@ public class SqlAnalyzer {
             } else if (currentToken == 'I') {
                 final char nextToken = this.sqlQueryInput.charAt(this.position + 1);
                 if (nextToken == 'S') {
+                    position += 2;
                     result.append(" IS ");
-                    currentToken = getNextToken();
+                    currentToken = getCurrentToken();
+                    if (currentToken == ' ') {
+                        currentToken = getNextTokeSkippingWhiteSpace(currentToken);
+                    }
                     if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
                             && this.sqlQueryInput.charAt(position + 2) == 'T'
+                            && this.sqlQueryInput.charAt(position + 3) == ' '
                     ) {
-                        result.append("NOT");
-                        this.position += 2;
+                        result.append("NOT ");
+                        this.position += 3;
                         currentToken = getNextToken();
                     }
                     if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'U'
                             && this.sqlQueryInput.charAt(position + 2) == 'L'
                             && this.sqlQueryInput.charAt(position + 3) == 'L'
+                            && (this.sqlQueryInput.charAt(position + 4) == ' ' || this.sqlQueryInput.charAt(position + 4) == ';')
                     ) {
                         result.append("NULL");
+                        this.position += "NULL ".length();
                     } else {
                         throw new Exception("Invalid query");
                     }
                 } else if (this.sqlQueryInput.charAt(this.position + 1) == 'N' &&
                         this.sqlQueryInput.charAt(this.position + 2) == ' ' &&
                         this.sqlQueryInput.charAt(this.position + 3) == '(') {
-                    int startPosition = this.position;
-                    this.position += 4;
-                    currentToken = getCurrentToken();
-                    String  operand = null;
-                    try {
-                        operand = parseOperand(currentToken);
-                        this.position--;
-                    } catch (Exception exception) {
-                        final String message = exception.getMessage();
-                        if (message.substring(message.length() - 1 - 3).equals("')'")) {
-                            throw new Exception(message);
-                        }
-                    }
-                    currentToken = this.getCurrentToken();
-                    if (currentToken != ')') {
-                        throwExpectedToken(currentToken, ")");
-                    }
-                    result.append("IN ").append(startPosition).append(" ").append(operand);
-                    this.position--;
+                    parseIne(result);
                 }
             } else {
                 if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
@@ -586,14 +575,16 @@ public class SqlAnalyzer {
                 if (currentToken == 'I' && this.sqlQueryInput.charAt(this.position + 1) == 'N' &&
                         this.sqlQueryInput.charAt(this.position + 2) == ' ' &&
                         this.sqlQueryInput.charAt(this.position + 3) == '(') {
-                    this.position += 4;
-                    currentToken = getNextToken();
-                    final String operand = parseOperand(currentToken);
-                    currentToken = this.getCurrentToken();
-                    if (currentToken != ')') {
-                        throwExpectedToken(currentToken, ")");
-                    }
-                    result.append("IN ").append(startPosition).append(" ").append(operand);
+                    parseIne(result);
+
+//                    this.position += 4;
+//                    currentToken = getNextToken();
+//                    final String operand = parseOperand(currentToken);
+//                    currentToken = this.getCurrentToken();
+//                    if (currentToken != ')') {
+//                        throwExpectedToken(currentToken, ")");
+//                    }
+//                    result.append("IN ").append(startPosition).append(" ").append(operand);
                 } else if (currentToken == 'L' && this.sqlQueryInput.charAt(this.position + 1) == 'I' &&
                         this.sqlQueryInput.charAt(this.position + 2) == 'K' &&
                         this.sqlQueryInput.charAt(this.position + 3) == 'E') {
@@ -633,6 +624,29 @@ public class SqlAnalyzer {
             }
         }
         return result.toString();
+    }
+
+    private void parseIne(StringBuilder result) throws Exception {
+        char currentToken;
+        int startPosition = this.position;
+        this.position += 4;
+        currentToken = getCurrentToken();
+        String operand = null;
+        try {
+            operand = parseOperand(currentToken);
+            this.position--;
+        } catch (Exception exception) {
+            final String message = exception.getMessage();
+            if (message.substring(message.length() - 1 - 3).equals("')'")) {
+                throw new Exception(message);
+            }
+        }
+        currentToken = this.getCurrentToken();
+        if (currentToken != ')') {
+            throwExpectedToken(currentToken, ")");
+        }
+        result.append("IN ").append(startPosition).append(" ").append(operand);
+        this.position--;
     }
 
     private String parseCompareCommand(final char token) {
@@ -811,7 +825,8 @@ public class SqlAnalyzer {
             token = getNextToken();
         }
         do {
-            if (!isQuoted && isKeyword(result.toString())) {}
+            if (!isQuoted && isKeyword(result.toString())) {
+            }
             result.append(token);
             token = getNextToken();
         } while (isAlphabetCharacter(token) || isDigit(token) || token == '_');
@@ -886,7 +901,7 @@ public class SqlAnalyzer {
                 result.append(token);
                 token = getNextToken();
             } while (isDigit(token) && this.position < this.QUERY_LENGTH - 2);
-            if ((token != ' ') &&  this.position == this.QUERY_LENGTH - 2) {
+            if ((token != ' ') && this.position == this.QUERY_LENGTH - 2) {
                 throw new Exception("Invalid digit. Position " + this.position);
             }
             return result.toString();

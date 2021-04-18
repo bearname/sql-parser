@@ -287,7 +287,7 @@ public class WhereTest {
             final List<String> whereClauses = query.getWhereClauses();
             whereClauses.forEach(System.out::println);
             assertEquals(1, whereClauses.size());
-            assertEquals("room_kind.name NOT LIKE 195 'Lux' OR 208 hotel.name EQUAL 223 'Altay'", whereClauses.get(0));
+            assertEquals("room_kind.name  NOT LIKE 199 'Lux' OR 212 hotel.name EQUAL 227 'Altay'", whereClauses.get(0));
         } catch (Exception exception) {
             exception.printStackTrace();
             assertTrue(false);
@@ -322,6 +322,94 @@ public class WhereTest {
             whereClauses.forEach(System.out::println);
             assertEquals(1, whereClauses.size());
             assertEquals("room_kind.id IN 193 1 OR 202 hotel.name EQUAL 217 'Altay'", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void notin() {
+        try {
+            final String sqlQueryInput = "SELECT  client.id_client AS id_client, client.full_name AS full_name, " +
+                    " client.phone     AS phone FROM room_in_reservation " +
+                    " LEFT JOIN hotel ON hotel.id_hotel = room.id_hotel " +
+                    " WHERE room_kind.id NOT IN (1)   OR  hotel.name = 'Altay';";
+
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sqlQueryInput);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> columns = query.getColumns();
+            columns.forEach(System.out::println);
+            assertEquals(columns.size(), 3);
+            assertEquals(columns.get(0), "client.id_client AS id_client");
+            assertEquals(columns.get(1), "client.full_name AS full_name");
+            assertEquals(columns.get(2), "client.phone AS phone");
+
+            System.out.println("=================");
+            final List<Join> joins = query.getJoins();
+            assertEquals(1, joins.size());
+            joins.forEach(System.out::println);
+            assertEquals(new Join(JoinType.LEFT, "hotel", "hotel.id_hotel", "room.id_hotel"),  joins.get(0));
+
+            System.out.println("=================");
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+            assertEquals(1, whereClauses.size());
+            assertEquals("room_kind.id  NOT IN 197 1 OR 206 hotel.name EQUAL 221 'Altay'", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void isnull() {
+        try {
+            final String sqlQueryInput = "SELECT  client.id_client AS id_client, client.full_name AS full_name, " +
+                    " client.phone     AS phone FROM room_in_reservation " +
+                    " WHERE  room_kind.id NOT IN (1)   OR  hotel.name  IS  NULL ;";
+
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sqlQueryInput);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> columns = query.getColumns();
+            columns.forEach(System.out::println);
+            assertEquals(columns.size(), 3);
+            assertEquals(columns.get(0), "client.id_client AS id_client");
+            assertEquals(columns.get(1), "client.full_name AS full_name");
+            assertEquals(columns.get(2), "client.phone AS phone");
+
+            System.out.println("=================");
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+            assertEquals(1, whereClauses.size());
+            assertEquals("room_kind.id  NOT IN 147 1 OR 156 hotel.name  IS NULL", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void isNotNull() {
+        try {
+            final String sqlQueryInput = "SELECT  client.id_client AS id_client, client.full_name AS full_name, " +
+                    " client.phone     AS phone FROM room_in_reservation " +
+                    " WHERE  room_kind.id NOT IN (1)   OR  hotel.name  IS NOT NULL ;";
+
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sqlQueryInput);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> columns = query.getColumns();
+            columns.forEach(System.out::println);
+            assertEquals(columns.size(), 3);
+            assertEquals(columns.get(0), "client.id_client AS id_client");
+            assertEquals(columns.get(1), "client.full_name AS full_name");
+            assertEquals(columns.get(2), "client.phone AS phone");
+
+            System.out.println("=================");
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+            assertEquals(1, whereClauses.size());
+            assertEquals("room_kind.id  NOT IN 147 1 OR 156 hotel.name  IS NOT NULL", whereClauses.get(0));
         } catch (Exception exception) {
             exception.printStackTrace();
             assertTrue(false);
