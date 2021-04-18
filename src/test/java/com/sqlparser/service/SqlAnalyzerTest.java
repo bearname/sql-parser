@@ -280,7 +280,7 @@ class SqlAnalyzerTest {
             final Query query = sqlAnalyzer.analyze();
             final List<String> columns = query.getColumns();
             columns.forEach(System.out::println);
-            assertEquals(columns.size() ,4);
+            assertEquals(columns.size(), 4);
             assertEquals(columns.get(0), "user.email");
             assertEquals(columns.get(1), "user.avatar AS usravatar");
             assertEquals(columns.get(2), "user.id");
@@ -289,7 +289,7 @@ class SqlAnalyzerTest {
             System.out.println("=================");
             final List<String> fromSources = query.getFromSources();
             fromSources.forEach(System.out::println);
-            assertEquals(fromSources.size() ,2);
+            assertEquals(fromSources.size(), 2);
             assertEquals(fromSources.get(0), "users");
             assertEquals(fromSources.get(1), "messages");
 
@@ -307,7 +307,7 @@ class SqlAnalyzerTest {
             final Query query = sqlAnalyzer.analyze();
             final List<String> columns = query.getColumns();
             columns.forEach(System.out::println);
-            assertEquals(columns.size() ,4);
+            assertEquals(columns.size(), 4);
             assertEquals(columns.get(0), "user.email");
             assertEquals(columns.get(1), "user.avatar AS usravatar");
             assertEquals(columns.get(2), "user.id");
@@ -320,8 +320,8 @@ class SqlAnalyzerTest {
 
             System.out.println("=================");
             final List<String> whereClauses = query.getWhereClauses();
-            assertEquals(whereClauses.size() , 1);
-            assertEquals(whereClauses.get(0), "users.id");
+            assertEquals(1, whereClauses.size());
+            assertEquals("users.id BETWEEN 111 50 100", whereClauses.get(0));
             whereClauses.forEach(System.out::println);
 
         } catch (Exception exception) {
@@ -333,28 +333,27 @@ class SqlAnalyzerTest {
     @Test
     public void whereNotBetween() {
         try {
-            final String sqlQueryInput = "SELECT    `user.email`   ,    user.avatar AS usravatar,  user.id,  user.address    FROM users WHERE  users.id NOT  BETWEEN 50 AND 100 ;";
+            final String sqlQueryInput = "SELECT    `user.email`   ,    user.avatar AS usravatar,  user.id,  user.address    FROM users WHERE  users.id NOT  BETWEEN 50  AND 100 ;";
             final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sqlQueryInput);
             final Query query = sqlAnalyzer.analyze();
             final List<String> columns = query.getColumns();
             columns.forEach(System.out::println);
-            assertEquals(columns.size() , 4);
-            assertEquals(columns.get(0), "user.email");
-            assertEquals(columns.get(1), "user.avatar AS usravatar");
-            assertEquals(columns.get(2), "user.id");
-            assertEquals(columns.get(3), "user.address");
+            assertEquals(4, columns.size());
+            assertEquals("user.email", columns.get(0));
+            assertEquals("user.avatar AS usravatar", columns.get(1));
+            assertEquals("user.id", columns.get(2));
+            assertEquals("user.address", columns.get(3));
 
             System.out.println("=================");
             final List<String> fromSources = query.getFromSources();
             fromSources.forEach(System.out::println);
-            assertEquals(fromSources.get(0), "users");
+            assertEquals("users", fromSources.get(0) );
 
             System.out.println("=================");
             final List<String> whereClauses = query.getWhereClauses();
-            assertEquals(whereClauses.size(), 1);
-            assertEquals(whereClauses.get(0), "users.id");
+            assertEquals(1, whereClauses.size());
+            assertEquals("users.id  NOT BETWEEN 115 50 100", whereClauses.get(0));
             whereClauses.forEach(System.out::println);
-
         } catch (Exception exception) {
             exception.printStackTrace();
             assertTrue(false);
@@ -591,7 +590,9 @@ class SqlAnalyzerTest {
             assertEquals(columns.get(2), "user.id");
             assertEquals(columns.get(3), "user.address");
 
-            final Join join = query.getJoin();
+            final List<Join> joins = query.getJoins();
+            assertEquals(joins.size(), 1);
+            final Join join = joins.get(0);
             System.out.println("=================" + join);
             assertEquals(new Join(JoinType.LEFT, "messages", "messages.user_id", "user.id"), join);
 
@@ -615,7 +616,9 @@ class SqlAnalyzerTest {
             assertEquals(columns.get(2), "user.id");
             assertEquals(columns.get(3), "user.address");
 
-            final Join join = query.getJoin();
+            final List<Join> joins = query.getJoins();
+            assertEquals(joins.size(), 1);
+            final Join join = joins.get(0);
             System.out.println("=================" + join);
             assertEquals(new Join(JoinType.RIGHT, "messages", "messages.user_id", "user.id"), join);
 
@@ -639,7 +642,9 @@ class SqlAnalyzerTest {
             assertEquals(columns.get(2), "user.id");
             assertEquals(columns.get(3), "user.address");
 
-            final Join join = query.getJoin();
+            final List<Join> joins = query.getJoins();
+            assertEquals(joins.size(), 1);
+            final Join join = joins.get(0);
             System.out.println("=================" + join);
             assertEquals(new Join(JoinType.FULL_OUTER, "messages", "messages.user_id", "user.id"), join);
 
@@ -663,9 +668,131 @@ class SqlAnalyzerTest {
             assertEquals(columns.get(2), "user.id");
             assertEquals(columns.get(3), "user.address");
 
-            final Join join = query.getJoin();
+            final List<Join> joins = query.getJoins();
+            assertEquals(joins.size(), 1);
+            final Join join = joins.get(0);
             System.out.println("=================" + join);
             assertEquals(new Join(JoinType.INNER, "messages", "messages.user_id", "user.id"), join);
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void compareLessThanOperand() {
+        try {
+            final String sql = "SELECT user.id FROM users WHERE user.created_at < 10 ;";
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sql);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+
+            assertEquals(1, whereClauses.size());
+            assertEquals("user.created_at LESS_THAN 48 10", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void compareLessThanOrEqualOperand() {
+        try {
+            final String sql = "SELECT user.id FROM users WHERE user.created_at <= 10 ;";
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sql);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+
+            assertEquals(1, whereClauses.size());
+            assertEquals("user.created_at LESS_THAN_OR_EQUAL_TO 48 10", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void compareGreaterThanOrEqualOperand() {
+        try {
+            final String sql = "SELECT user.id FROM users WHERE user.created_at >= 10 ;";
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sql);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+
+            assertEquals(1, whereClauses.size());
+            assertEquals("user.created_at GREATER_THAN_OR_EQUAL_TO 48 10", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void compareGreaterThanOperand() {
+        try {
+            final String sql = "SELECT user.id FROM users WHERE user.created_at > 10 ;";
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sql);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> whereClauses = query.getWhereClauses();
+
+            whereClauses.forEach(System.out::println);
+
+            assertEquals(1, whereClauses.size());
+            assertEquals("user.created_at GREATER_THAN 48 10", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void compareEqualOperand() {
+        try {
+            final String sql = "SELECT user.id FROM users WHERE user.created_at = 10 ;";
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sql);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+            assertEquals(1, whereClauses.size());
+            assertEquals("user.created_at EQUAL 48 10", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void compareNotEqualOperand() {
+        try {
+            final String sql = "SELECT user.id FROM users WHERE user.created_at != 10 ;";
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sql);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> whereClauses = query.getWhereClauses();
+
+            whereClauses.forEach(System.out::println);
+
+            assertEquals(1, whereClauses.size());
+            assertEquals("user.created_at NOT_EQUAL 48 10", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void compareNotEqualOperandSecond() {
+        try {
+            final String sql = "SELECT user.id FROM users WHERE user.created_at <> 10 ;";
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sql);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+            assertEquals(1, whereClauses.size());
+            assertEquals("user.created_at NOT_EQUAL 48 10", whereClauses.get(0));
 
         } catch (Exception exception) {
             exception.printStackTrace();

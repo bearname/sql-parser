@@ -6,7 +6,7 @@ import java.util.List;
 public class Query {
     private final List<String> columns = new ArrayList<>();
     private final List<String> fromSources = new ArrayList<>();
-    private Join join;
+    private final List<Join> joins = new ArrayList<>();
     private final List<String> whereClauses = new ArrayList<>();
     private String groupBy;
     private String orderBy;
@@ -68,10 +68,10 @@ public class Query {
     }
 
     public void setJoin(final Join join) {
-        this.join = join;
+        this.joins.add(join);
     }
 
-    public Join getJoin() {
-        return join;
+    public List<Join> getJoins() {
+        return joins;
     }
 }

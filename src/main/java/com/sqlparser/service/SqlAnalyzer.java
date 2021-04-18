@@ -5,6 +5,9 @@ import com.sqlparser.model.JoinType;
 import com.sqlparser.model.Limit;
 import com.sqlparser.model.Query;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class SqlAnalyzer {
     public static final char ALL_COLUMNS_CHAR = '*';
     public static final char WHITESPACE = ' ';
@@ -12,26 +15,36 @@ public class SqlAnalyzer {
     private final static String SELECT = "SELECT ";
     private final static String FROM = "FROM ";
     private static final String WHERE = "WHERE ";
-    private static final String GROUP_BY = "GROUP BY ";
-    private static final String ORDER_BY = "ORDER BY ";
-    private static final String LIMIT = "LIMIT ";
-    private static final String OFFSET = "OFFSET ";
-    public static final String ASC = " ASC";
     public static final String LEFT_JOIN = "LEFT JOIN ";
     public static final String RIGHT_JOIN = "RIGHT JOIN ";
     public static final String INNER_JOIN = "INNER JOIN ";
     public static final String FULL_OUTER_JOIN = "FULL OUTER JOIN ";
+    private static final String GROUP_BY = "GROUP BY ";
+    private static final String ORDER_BY = "ORDER BY ";
+    private static final String LIMIT = "LIMIT ";
+    private static final String OFFSET = "OFFSET ";
+    private static final String BETWEEN = "BETWEEN ";
+    public static final String ASC = " ASC";
+    public static final String DESC = " DESC";
+
     public static final char QUERY_END_SYMBOL = ';';
+    private final Map<String, OperatorType> mapComparisonOperator = new HashMap<>();
 
     private final String sqlQueryInput;
     private final Query query = new Query();
     private int position = 0;
     private final int QUERY_LENGTH;
-    public static final String DESC = " DESC";
 
     public SqlAnalyzer(String sqlQueryInput) {
         this.sqlQueryInput = sqlQueryInput;
         this.QUERY_LENGTH = sqlQueryInput.length();
+        this.mapComparisonOperator.put("<", OperatorType.LESS_THAN);
+        this.mapComparisonOperator.put("<=", OperatorType.LESS_THAN_OR_EQUAL_TO);
+        this.mapComparisonOperator.put(">", OperatorType.GREATER_THAN);
+        this.mapComparisonOperator.put(">=", OperatorType.GREATER_THAN_OR_EQUAL_TO);
+        this.mapComparisonOperator.put("!=", OperatorType.NOT_EQUAL);
+        this.mapComparisonOperator.put("<>", OperatorType.NOT_EQUAL);
+        this.mapComparisonOperator.put("=", OperatorType.EQUAL);
     }
 
     public Query analyze() throws Exception {
@@ -45,6 +58,7 @@ public class SqlAnalyzer {
         checkFromTableExpressions();
         checkJoinTable();
         checkWhereTableExpressions();
+        //TODO having support, compare operator, subquery, function
         checkGroupBy();
         checkOrderBy();
         checkLimitOffset();
@@ -137,8 +151,111 @@ public class SqlAnalyzer {
 
         return joinType;
     }
+    private void checkWhereTableExpressions() {
+        try {
+            char token = getCharIgnoringRedundantWhitespace(this.position);
+            if (token != QUERY_END_SYMBOL) {
+                final int i = QUERY_LENGTH - WHERE.length() - 1 - 1 - 1 - 1;
+                if (this.position < i && token == WHERE.charAt(0)) {
+                    checkKeyWord(token, WHERE);
+                    token = getCurrentToken();
+                    if (token == ' ') {
+                        token = getCharIgnoringRedundantWhitespace(this.position);
+                    } else {
+                        token = getNextToken();
+                    }
+
+                    final String s = parseExpression(token);
+                    query.addWhere(s);
+                }
+            }
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    private void checkGroupBy() throws Exception {
+        if (this.position > QUERY_LENGTH - 1 - GROUP_BY.length() - 1 - ";".length()) {
+            return;
+        }
+        char token = getCharIgnoringRedundantWhitespace(this.position);
+        if (token != QUERY_END_SYMBOL) {
+            final int i = QUERY_LENGTH - GROUP_BY.length() - 1 - 1 - 1 - 1;
+            if (this.position <= i && token == GROUP_BY.charAt(0)) {
+                int startPosition = this.position;
+                checkKeyWord(token, GROUP_BY);
+                token = getCurrentToken();
+                if (token == ' ') {
+                    token = getCharIgnoringRedundantWhitespace(this.position);
+                } else {
+                    token = getNextToken();
+                }
+
+                final String s = parseColumnRef(token);
+                query.addGroupBy(GROUP_BY + startPosition + " " + s);
+            }
+        }
+    }
+
+    private void checkOrderBy() throws Exception {
+        if (this.position > QUERY_LENGTH - 1 - ORDER_BY.length() - 1 - ";".length()) {
+            return;
+        }
+        char token = getCharIgnoringRedundantWhitespace(this.position);
+        if (token != QUERY_END_SYMBOL) {
+            final int i = QUERY_LENGTH - ORDER_BY.length() - 1 - 1 - 1 - 1;
+            if (this.position <= i && token == ORDER_BY.charAt(0)) {
+                int startPosition = this.position;
+                checkKeyWord(token, ORDER_BY);
+                token = sqlQueryInput.charAt(this.position);
+                if (token == ' ') {
+                    token = getCharIgnoringRedundantWhitespace(this.position);
+                } else {
+                    token = getNextToken();
+                }
+
+                StringBuilder s = new StringBuilder(parseOrderByValue(token));
+                token = getCurrentToken();
+                while (token == ',') {
+                    token = getNextToken();
+                    if (token == ' ') {
+                        token = getCharIgnoringRedundantWhitespace(this.position);
+                    }
+                    s.append(", ").append(parseColumnRef(token));
+                    token = getCurrentToken();
+                    if (token == ' ') {
+                        token = getCharIgnoringRedundantWhitespace(this.position);
+                    }
+                    if (this.position < QUERY_LENGTH - 1) {
+                        break;
+                    }
+                }
+                String result = ORDER_BY + startPosition + " " + s;
+                token = getCharIgnoringRedundantWhitespace(this.position);
+                if (startPosition + ORDER_BY.length() + 1 + 1 + " ASC;".length() < QUERY_LENGTH && token == 'A' &&
+                        this.sqlQueryInput.charAt(this.position + 1) == 'S' &&
+                        this.sqlQueryInput.charAt(this.position + 2) == 'C'
+                ) {
+                    this.position += ASC.length();
+                    result += ASC;
+                } else if (startPosition + ORDER_BY.length() + 1 + 1 + " DESC".length() < QUERY_LENGTH && token == 'D' &&
+                        this.sqlQueryInput.charAt(this.position + 1) == 'E' &&
+                        this.sqlQueryInput.charAt(this.position + 2) == 'S' &&
+                        this.sqlQueryInput.charAt(this.position + 3) == 'C'
+                ) {
+                    this.position += DESC.length();
+                    result += DESC;
+                }
+
+                query.addOrderBy(result);
+            }
+        }
+    }
 
     private void checkLimitOffset() throws Exception {
+        if (this.position > QUERY_LENGTH - 1 - ORDER_BY.length() - 1 - ";".length()) {
+            return;
+        }
         char token = sqlQueryInput.charAt(this.position);
         if (token != QUERY_END_SYMBOL) {
             if (token == ' ') {
@@ -207,58 +324,6 @@ public class SqlAnalyzer {
         return "";
     }
 
-    private void checkOrderBy() throws Exception {
-        char token = getCharIgnoringRedundantWhitespace(this.position);
-        if (token != QUERY_END_SYMBOL) {
-            final int i = QUERY_LENGTH - ORDER_BY.length() - 1 - 1 - 1 - 1;
-            if (this.position <= i && token == ORDER_BY.charAt(0)) {
-                int startPosition = this.position;
-                checkKeyWord(token, ORDER_BY);
-                token = sqlQueryInput.charAt(this.position);
-                if (token == ' ') {
-                    token = getCharIgnoringRedundantWhitespace(this.position);
-                } else {
-                    token = getNextToken();
-                }
-
-                StringBuilder s = new StringBuilder(parseOrderByValue(token));
-                token = getCurrentToken();
-                while (token == ',') {
-                    token = getNextToken();
-                    if (token == ' ') {
-                        token = getCharIgnoringRedundantWhitespace(this.position);
-                    }
-                    s.append(", ").append(parseColumnRef(token));
-                    token = getCurrentToken();
-                    if (token == ' ') {
-                        token = getCharIgnoringRedundantWhitespace(this.position);
-                    }
-                    if (this.position < QUERY_LENGTH - 1) {
-                        break;
-                    }
-                }
-                String result = ORDER_BY + startPosition + " " + s;
-                token = getCharIgnoringRedundantWhitespace(this.position);
-                if (startPosition + ORDER_BY.length() + 1 + 1 + " ASC;".length() < QUERY_LENGTH && token == 'A' &&
-                        this.sqlQueryInput.charAt(this.position + 1) == 'S' &&
-                        this.sqlQueryInput.charAt(this.position + 2) == 'C'
-                ) {
-                    this.position += ASC.length();
-                    result += ASC;
-                } else if (startPosition + ORDER_BY.length() + 1 + 1 + " DESC".length() < QUERY_LENGTH && token == 'D' &&
-                        this.sqlQueryInput.charAt(this.position + 1) == 'E' &&
-                        this.sqlQueryInput.charAt(this.position + 2) == 'S' &&
-                        this.sqlQueryInput.charAt(this.position + 3) == 'C'
-                ) {
-                    this.position += DESC.length();
-                    result += DESC;
-                }
-
-                query.addOrderBy(result);
-            }
-        }
-    }
-
     private String parseOrderByValue(char token) throws Exception {
         StringBuilder result = new StringBuilder();
         final String value = parseDigit(token);
@@ -276,49 +341,6 @@ public class SqlAnalyzer {
 
     private char getCurrentToken() {
         return sqlQueryInput.charAt(this.position);
-    }
-
-    private void checkGroupBy() throws Exception {
-        char token = getCharIgnoringRedundantWhitespace(this.position);
-        if (token != QUERY_END_SYMBOL) {
-            final int i = QUERY_LENGTH - GROUP_BY.length() - 1 - 1 - 1 - 1;
-            if (this.position <= i && token == GROUP_BY.charAt(0)) {
-                int startPosition = this.position;
-                checkKeyWord(token, GROUP_BY);
-                token = getCurrentToken();
-                if (token == ' ') {
-                    token = getCharIgnoringRedundantWhitespace(this.position);
-                } else {
-                    token = getNextToken();
-                }
-
-                final String s = parseColumnRef(token);
-                query.addGroupBy(GROUP_BY + startPosition + " " + s);
-            }
-        }
-    }
-
-    private void checkWhereTableExpressions() {
-        try {
-            char token = getCharIgnoringRedundantWhitespace(this.position);
-            if (token != QUERY_END_SYMBOL) {
-                final int i = QUERY_LENGTH - WHERE.length() - 1 - 1 - 1 - 1;
-                if (this.position < i && token == WHERE.charAt(0)) {
-                    checkKeyWord(token, WHERE);
-                    token = getCurrentToken();
-                    if (token == ' ') {
-                        token = getCharIgnoringRedundantWhitespace(this.position);
-                    } else {
-                        token = getNextToken();
-                    }
-
-                    final String s = parseExpression(token);
-                    query.addWhere(s);
-                }
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
-        }
     }
 
     private String parseExpression(char token) throws Exception {
@@ -349,7 +371,6 @@ public class SqlAnalyzer {
         StringBuilder result = new StringBuilder();
         String leftCondition = parseCondition(token);
         result.append(leftCondition);
-
         if (token == ' ' && this.sqlQueryInput.charAt(position + 1) == 'A' &&
                 this.sqlQueryInput.charAt(position + 2) == 'N' &&
                 this.sqlQueryInput.charAt(position + 3) == 'D' &&
@@ -364,46 +385,54 @@ public class SqlAnalyzer {
         return result.toString();
     }
 
-    private String parseCondition(final char token) throws Exception {
+    private String parseCondition(char token) throws Exception {
         if (this.position >= this.QUERY_LENGTH - 3) {
             throw new Exception("Invalid query");
         }
         StringBuilder result = new StringBuilder();
-
+        if (token == ' ') {
+            token = getCharIgnoringRedundantWhitespace(this.position);
+        }
         if (token == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
                 && this.sqlQueryInput.charAt(position + 2) == 'T'
         ) {
             result.append("NOT");
-
             String value = parseExpression(token);
             result.append(value);
         } else if (token == '(') {
             result.append(token);
             String value = parseExpression(token);
-            final char nextToken = getNextToken();
-            if (nextToken != ')') {
-                throwExpectedToken(nextToken, ")");
+            char currentToken = getNextToken();
+            if (currentToken != ')') {
+                throwExpectedToken(currentToken, ")");
             }
             result.append(value);
         } else {
+            int start = this.position;
             String operandFirst = parseOperand(token);
-            result.append(operandFirst);
-            char nextToken = getNextToken();
-            if (nextToken == ' ') {
-                nextToken = getCharIgnoringRedundantWhitespace(this.position);
+            result.append(operandFirst).append(' ');
+            this.position = start + operandFirst.length();
+            char currentToken = getCurrentToken();
+            if (currentToken == ' ') {
+                currentToken = getCharIgnoringRedundantWhitespace(this.position);
             }
-            if (nextToken == 'I') {
+            final String compareOperand = parseCompareCommand(currentToken);
+            if (!compareOperand.isEmpty()) {
+                currentToken= getCurrentToken();
+                String operandSecond = parseOperand(currentToken);
+                result.append(compareOperand).append(' ').append(operandSecond);
+            } else if (currentToken == 'I') {
                 if (this.sqlQueryInput.charAt(this.position + 1) == 'S') {
                     result.append(" IS ");
-                    nextToken = getNextToken();
-                    if (nextToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
+                    currentToken = getNextToken();
+                    if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
                             && this.sqlQueryInput.charAt(position + 2) == 'T'
                     ) {
                         result.append("NOT");
                         this.position += 2;
-                        nextToken = getNextToken();
+                        currentToken = getNextToken();
                     }
-                    if (nextToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'U'
+                    if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'U'
                             && this.sqlQueryInput.charAt(position + 2) == 'L'
                             && this.sqlQueryInput.charAt(position + 3) == 'L'
                     ) {
@@ -413,35 +442,39 @@ public class SqlAnalyzer {
                     }
                 }
             } else {
-                if (nextToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
-                        && this.sqlQueryInput.charAt(position + 2) == 'T'
+                if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
+                        && this.sqlQueryInput.charAt(position + 2) == 'T' &&
+                        this.sqlQueryInput.charAt(position + 3) == ' '
                 ) {
-                    result.append("NOT");
-                    this.position += 2;
-                    nextToken = getNextToken();
+                    result.append(" NOT ");
+                    this.position += 3;
+                    currentToken = getNextToken();
+                    if (currentToken == ' ') {
+                        currentToken = getNextTokeSkippingWhiteSpace(currentToken);
+                    }
                 }
                 int startPosition = this.position;
 
-                if (nextToken == 'I' && this.sqlQueryInput.charAt(this.position + 1) == 'N' &&
+                if (currentToken == 'I' && this.sqlQueryInput.charAt(this.position + 1) == 'N' &&
                         this.sqlQueryInput.charAt(this.position + 2) == ' ' &&
                         this.sqlQueryInput.charAt(this.position + 3) == '(') {
                     this.position += 4;
-                    nextToken = getNextToken();
-                    final String s = parseSummOperation(nextToken);
-                    nextToken = this.getCurrentToken();
-                    if (nextToken != ')') {
-                        throwExpectedToken(nextToken, ")");
+                    currentToken = getNextToken();
+                    final String s = parseSummOperation(currentToken);
+                    currentToken = this.getCurrentToken();
+                    if (currentToken != ')') {
+                        throwExpectedToken(currentToken, ")");
                     }
                     result.append("IN ").append(startPosition).append(" ").append(s);
 
-                } else if (nextToken == 'L' && this.sqlQueryInput.charAt(this.position + 1) == 'I' &&
+                } else if (currentToken == 'L' && this.sqlQueryInput.charAt(this.position + 1) == 'I' &&
                         this.sqlQueryInput.charAt(this.position + 2) == 'K' &&
                         this.sqlQueryInput.charAt(this.position + 3) == 'E') {
                     this.position += 4;
-                    nextToken = getNextToken();
-                    final String value = parseOperand(nextToken);
+                    currentToken = getNextToken();
+                    final String value = parseOperand(currentToken);
                     result.append("LIKE ").append(startPosition).append(" ").append(value);
-                } else if (nextToken == 'B' && this.sqlQueryInput.charAt(this.position + 1) == 'E' &&
+                } else if (currentToken == 'B' && this.sqlQueryInput.charAt(this.position + 1) == 'E' &&
                         this.sqlQueryInput.charAt(this.position + 2) == 'T' &&
                         this.sqlQueryInput.charAt(this.position + 3) == 'W' &&
                         this.sqlQueryInput.charAt(this.position + 4) == 'E' &&
@@ -449,21 +482,23 @@ public class SqlAnalyzer {
                         this.sqlQueryInput.charAt(this.position + 6) == 'N' &&
                         this.sqlQueryInput.charAt(this.position + 7) == ' '
                 ) {
-
-                    this.position += 8;
-                    nextToken = getNextToken();
-                    String s = parseOperand(nextToken);
-                    nextToken = this.getCurrentToken();
-                    result.append("BETWEEN ").append(startPosition).append(" ").append(s);
-                    if (nextToken == ' ' && this.sqlQueryInput.charAt(this.position + 1) == 'A' &&
-                            this.sqlQueryInput.charAt(this.position + 2) == 'N' &&
-                            this.sqlQueryInput.charAt(this.position + 3) == 'D' &&
-                            this.sqlQueryInput.charAt(this.position + 4) == ' '
+                    this.position += BETWEEN.length();
+                    currentToken  = getCurrentToken();
+                    String operand = parseOperand(currentToken);
+                    currentToken = getCurrentToken();
+                    if (currentToken == ' ') {
+                        currentToken= getNextTokeSkippingWhiteSpace(currentToken);
+                    }
+                    result.append(BETWEEN).append(startPosition).append(" ").append(operand);
+                    if (currentToken == 'A' &&
+                            this.sqlQueryInput.charAt(this.position + 1) == 'N' &&
+                            this.sqlQueryInput.charAt(this.position + 2) == 'D' &&
+                            this.sqlQueryInput.charAt(this.position + 3) == ' '
                     ) {
-                        this.position += 5;
-                        nextToken = getNextToken();
-                        s = parseOperand(nextToken);
-                        result.append(s);
+                        this.position += 4;
+                        currentToken = getCurrentToken();
+                        operand = parseOperand(currentToken);
+                        result.append(' ').append(operand);
                     } else {
                         throwExpectedToken(token, " AND ");
                     }
@@ -475,13 +510,56 @@ public class SqlAnalyzer {
         return result.toString();
     }
 
+    private String parseCompareCommand(final char token) {
+        StringBuilder result = new StringBuilder();
+        if (this.position < QUERY_LENGTH - 1 - 1) {
+            final int startPosition = this.position;
+
+            OperatorType operatorType = getOperatorType(token);
+            if (operatorType != null) {
+                result.append(operatorType)
+                        .append(' ')
+                        .append(startPosition);
+            }
+        }
+        return result.toString();
+    }
+
+    private OperatorType getOperatorType(char token) {
+        final char nextToken = sqlQueryInput.charAt(this.position + 1);
+        if (isCompare(token) && nextToken == ' ') {
+            final OperatorType operatorType = mapComparisonOperator.get(String.valueOf(token));
+            if (operatorType != null) {
+                this.position += 2;
+            }
+            return operatorType;
+        } else if (isCompare(token) && (nextToken == '>' || nextToken == '=')) {
+            final char[] chars = new char[2];
+            chars[0] = token;
+            chars[1] = nextToken;
+            final String key = new String(chars);
+            if (mapComparisonOperator.containsKey(key)) {
+                final OperatorType operatorType = mapComparisonOperator.get(key);
+                if (operatorType != null) {
+                    this.position += 3;
+                }
+                return operatorType;
+            }
+        }
+        return null;
+    }
+
+    private boolean isCompare(final char token) {
+        return "<>=!".indexOf(token) >= 0;
+    }
+
     private String parseOperand(final char token) throws Exception {
         StringBuilder result = new StringBuilder();
 
         String factor = parseSummOperation(token);
 
         result.append(factor);
-        char nextToken = getNextToken();
+        char nextToken = getCurrentToken();
 
         if (this.position < this.QUERY_LENGTH - 1 - 3) {
             if (nextToken == '|' || sqlQueryInput.charAt(this.position + 1) == '|') {
@@ -744,15 +822,20 @@ public class SqlAnalyzer {
 
     private void checkKeyWord(char charAt, String from) throws Exception {
         if (charAt == from.charAt(0)) {
+            final int startPosition = this.position;
             this.position++;
             for (int i = 1; i < from.length() - 1; position++, i++) {
                 if (sqlQueryInput.charAt(position) != from.charAt(i)) {
-                    throwInvalidToken(charAt, position);
+                    final int invalidPosition = this.position;
+                    this.position = startPosition;
+                    throwInvalidToken(charAt, invalidPosition);
                 }
             }
             charAt = sqlQueryInput.charAt(position);
             if (charAt != ' ') {
-                throwInvalidToken(charAt, position);
+                final int invalidPosition = this.position;
+                this.position = startPosition;
+                throwInvalidToken(charAt, invalidPosition);
             }
         }
     }
@@ -830,8 +913,8 @@ public class SqlAnalyzer {
     private char getCharIgnoringRedundantWhitespace(int position) throws Exception {
         char charAt = sqlQueryInput.charAt(position);
         if (charAt == ' ' && position + 1 < sqlQueryInput.length() - 2) {
+            charAt = getNextToken();
             if (sqlQueryInput.charAt(position + 1) == ' ') {
-                charAt = getNextToken();
                 while (charAt == ' ') {
                     charAt = getNextToken();
                 }
