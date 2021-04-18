@@ -64,10 +64,8 @@ public class SqlAnalyzer {
         checkWhereTableExpressions();
         //TODO having support,
         // multiple 'OR' and 'AND' operator
-        // compare operator,
         // subquery,
         // function,
-        // multiple value in 'IN' operator
 
         checkGroupBy();
         checkOrderBy();
@@ -556,7 +554,7 @@ public class SqlAnalyzer {
                 } else if (this.sqlQueryInput.charAt(this.position + 1) == 'N' &&
                         this.sqlQueryInput.charAt(this.position + 2) == ' ' &&
                         this.sqlQueryInput.charAt(this.position + 3) == '(') {
-                    parseIne(result);
+                    parseIn(result);
                 }
             } else {
                 if (currentToken == 'N' && this.sqlQueryInput.charAt(position + 1) == 'O'
@@ -575,16 +573,7 @@ public class SqlAnalyzer {
                 if (currentToken == 'I' && this.sqlQueryInput.charAt(this.position + 1) == 'N' &&
                         this.sqlQueryInput.charAt(this.position + 2) == ' ' &&
                         this.sqlQueryInput.charAt(this.position + 3) == '(') {
-                    parseIne(result);
-
-//                    this.position += 4;
-//                    currentToken = getNextToken();
-//                    final String operand = parseOperand(currentToken);
-//                    currentToken = this.getCurrentToken();
-//                    if (currentToken != ')') {
-//                        throwExpectedToken(currentToken, ")");
-//                    }
-//                    result.append("IN ").append(startPosition).append(" ").append(operand);
+                    parseIn(result);
                 } else if (currentToken == 'L' && this.sqlQueryInput.charAt(this.position + 1) == 'I' &&
                         this.sqlQueryInput.charAt(this.position + 2) == 'K' &&
                         this.sqlQueryInput.charAt(this.position + 3) == 'E') {
@@ -626,26 +615,52 @@ public class SqlAnalyzer {
         return result.toString();
     }
 
-    private void parseIne(StringBuilder result) throws Exception {
+    private void parseIn(StringBuilder result) throws Exception {
         char currentToken;
         int startPosition = this.position;
         this.position += 4;
         currentToken = getCurrentToken();
-        String operand = null;
-        try {
-            operand = parseOperand(currentToken);
-            this.position--;
-        } catch (Exception exception) {
-            final String message = exception.getMessage();
-            if (message.substring(message.length() - 1 - 3).equals("')'")) {
-                throw new Exception(message);
+        StringBuilder operands = new StringBuilder();
+        boolean isFirst =true;
+        while (currentToken != ')' && this.position < QUERY_LENGTH - 1) {
+            String operand = null;
+            int start = this.position;
+            try {
+                operand = parseOperand(currentToken);
+
+                currentToken = getCurrentToken();
+
+                if (!isFirst) {
+                    operands.append(", ");
+                }
+                if (isFirst) {
+                    isFirst = false;
+                }
+                operands.append(operand);
+            } catch (Exception exception) {
+                final String message = exception.getMessage();
+                if (message.substring(message.length() - 1 - 3).equals("')'")) {
+                    throw new Exception(message);
+                }
+            }
+
+            if (sqlQueryInput.charAt(this.position - 1) == ')') {
+                this.position--;
+                currentToken = getCurrentToken();
+            }
+            if (currentToken == ')' ||sqlQueryInput.charAt(start + operand.length() + 1) == ')' || this.position >= QUERY_LENGTH - 1) {
+                break;
+            }
+            currentToken = this.getNextToken();
+            if (currentToken == ' ') {
+                currentToken = getNextTokeSkippingWhiteSpace(currentToken);
             }
         }
-        currentToken = this.getCurrentToken();
+
         if (currentToken != ')') {
             throwExpectedToken(currentToken, ")");
         }
-        result.append("IN ").append(startPosition).append(" ").append(operand);
+        result.append("IN ").append(startPosition).append(" ").append(operands);
         this.position--;
     }
 

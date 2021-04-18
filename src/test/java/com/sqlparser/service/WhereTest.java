@@ -329,6 +329,60 @@ public class WhereTest {
     }
 
     @Test
+    public void inMultipleValue() {
+        try {
+            final String sqlQueryInput = "SELECT  client.id_client AS id_client, client.full_name AS full_name, " +
+                    " client.phone     AS phone FROM room_in_reservation " +
+                    " WHERE room_kind.id IN (1, 2, 3 , 4 )   OR  hotel.name = 'Altay';";
+
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sqlQueryInput);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> columns = query.getColumns();
+            columns.forEach(System.out::println);
+            assertEquals(columns.size(), 3);
+            assertEquals(columns.get(0), "client.id_client AS id_client");
+            assertEquals(columns.get(1), "client.full_name AS full_name");
+            assertEquals(columns.get(2), "client.phone AS phone");
+
+            System.out.println("=================");
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+            assertEquals(1, whereClauses.size());
+            assertEquals("room_kind.id IN 142 1, 2, 3, 4 OR 162 hotel.name EQUAL 177 'Altay'", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void inMultipleValue1() {
+        try {
+            final String sqlQueryInput = "SELECT  client.id_client AS id_client, client.full_name AS full_name, " +
+                    " client.phone     AS phone FROM room_in_reservation " +
+                    " WHERE room_kind.id IN (1, 2, 3 , 4)   OR  hotel.name = 'Altay';";
+
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer(sqlQueryInput);
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> columns = query.getColumns();
+            columns.forEach(System.out::println);
+            assertEquals(columns.size(), 3);
+            assertEquals(columns.get(0), "client.id_client AS id_client");
+            assertEquals(columns.get(1), "client.full_name AS full_name");
+            assertEquals(columns.get(2), "client.phone AS phone");
+
+            System.out.println("=================");
+            final List<String> whereClauses = query.getWhereClauses();
+            whereClauses.forEach(System.out::println);
+            assertEquals(1, whereClauses.size());
+            assertEquals("room_kind.id IN 142 1, 2, 3, 4 OR 161 hotel.name EQUAL 176 'Altay'", whereClauses.get(0));
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
     public void notin() {
         try {
             final String sqlQueryInput = "SELECT  client.id_client AS id_client, client.full_name AS full_name, " +
