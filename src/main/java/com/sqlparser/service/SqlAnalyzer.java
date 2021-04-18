@@ -75,28 +75,31 @@ public class SqlAnalyzer {
     }
 
     private void checkSelectAggregateColumns() throws Exception {
-        char charAt = sqlQueryInput.charAt(position);
-        checkKeyWord(charAt, SELECT);
-        charAt = getNextToken();
-        if (charAt == ALL_COLUMNS_CHAR) {
+        char token = sqlQueryInput.charAt(position);
+        if (token == ' ') {
+            token = getCharIgnoringRedundantWhitespace(token);
+        }
+        checkKeyWord(token, SELECT);
+        token = getNextToken();
+        if (token == ALL_COLUMNS_CHAR) {
             query.addColumn(String.valueOf(ALL_COLUMNS_CHAR));
             position++;
             if (sqlQueryInput.charAt(position) != WHITESPACE) {
-                throwInvalidToken(charAt, position);
+                throwInvalidToken(token, position);
             }
         } else {
             String aggregateColumn = getAggregateColumn();
             query.addColumn(aggregateColumn);
-            charAt = getCharIgnoringRedundantWhitespace(position);
+            token = getCharIgnoringRedundantWhitespace(position);
 
-            while (charAt == ',') {
+            while (token == ',') {
                 this.position++;
                 aggregateColumn = getAggregateColumn();
                 query.addColumn(aggregateColumn);
-                if (charAt == ' ') {
-                    charAt = getCharIgnoringRedundantWhitespace(this.position);
+                if (token == ' ') {
+                    token = getCharIgnoringRedundantWhitespace(this.position);
                 } else {
-                    charAt = getCurrentToken();
+                    token = getCurrentToken();
                 }
             }
         }
@@ -119,6 +122,21 @@ public class SqlAnalyzer {
         }
 
         checkKeyWord(charAt, FROM);
+        char currentToken = getCurrentToken();
+        if (currentToken == ' ') {
+            currentToken = getNextTokeSkippingWhiteSpace(currentToken);
+        }
+        if (currentToken == '(') {
+            this.position++;
+            analyze();
+            currentToken = this.getCurrentToken();
+            if (currentToken == ' ') {
+                currentToken = getCharIgnoringRedundantWhitespace(currentToken);
+            }
+            if (currentToken != ')') {
+                throwExpectedToken(currentToken, ")");
+            }
+        }
         String sourceTable = getAggregateColumn();
         this.query.addFromSource(sourceTable);
         charAt = getCharIgnoringRedundantWhitespace(position);
@@ -925,7 +943,6 @@ public class SqlAnalyzer {
         return "";
     }
 
-
     private void checkKeyWord(char charAt, String from) throws Exception {
         if (charAt == from.charAt(0)) {
             final int startPosition = this.position;
@@ -943,6 +960,8 @@ public class SqlAnalyzer {
                 this.position = startPosition;
                 throwInvalidToken(charAt, invalidPosition);
             }
+        } else {
+            throw new Exception("Invalid first symbol on query. Position " + this.position);
         }
     }
 

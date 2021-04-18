@@ -300,6 +300,33 @@ class SqlAnalyzerTest {
     }
 
     @Test
+    public void subQuery() {
+        try {
+            final SqlAnalyzer sqlAnalyzer = new SqlAnalyzer("SELECT    `user.email`   ,    user.avatar AS usravatar,  user.id,  user.address    FROM ( SELECT id FROM ( SELECT * FROM users ) );");
+            final Query query = sqlAnalyzer.analyze();
+            final List<String> columns = query.getColumns();
+            columns.forEach(System.out::println);
+            assertEquals(columns.size(), 6);
+            assertEquals(columns.get(0), "user.email");
+            assertEquals(columns.get(1), "user.avatar AS usravatar");
+            assertEquals(columns.get(2), "user.id");
+            assertEquals(columns.get(3), "user.address");
+            assertEquals(columns.get(4), "id");
+            assertEquals(columns.get(5), "*");
+
+            System.out.println("=================");
+            final List<String> fromSources = query.getFromSources();
+            fromSources.forEach(System.out::println);
+            assertEquals(fromSources.size(), 3);
+            assertEquals(fromSources.get(0), "users");
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            assertTrue(false);
+        }
+    }
+
+    @Test
     public void groupByField() {
         try {
             final String sqlQueryInput = "SELECT    `user.email`   ,    user.avatar AS usravatar,  user.id,  user.address    FROM users GROUP BY  user.address ;";
