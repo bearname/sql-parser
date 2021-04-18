@@ -29,6 +29,8 @@ public class SqlAnalyzer {
 
     public static final char QUERY_END_SYMBOL = ';';
     public static final char STRING_QUOTED_SYMBOL = '\'';
+    public static final String OR = "OR ";
+    public static final String AND = "AND ";
     private final Map<String, OperatorType> mapComparisonOperator = new HashMap<>();
 
     private final String sqlQueryInput;
@@ -55,12 +57,18 @@ public class SqlAnalyzer {
         if (sqlQueryInput.charAt(QUERY_LENGTH - 1) != ';') {
             throw new Exception("Query must contains ';' at the end. " + sqlQueryInput);
         }
+
         checkSelectAggregateColumns();
         checkFromTableExpressions();
-        //TODO multiple joins
         checkJoinTable();
         checkWhereTableExpressions();
-        //TODO having support, compare operator, subquery, function
+        //TODO having support,
+        // multiple 'OR' and 'AND' operator
+        // compare operator,
+        // subquery,
+        // function,
+        // multiple value in 'IN' operator
+
         checkGroupBy();
         checkOrderBy();
         checkLimitOffset();
@@ -133,7 +141,14 @@ public class SqlAnalyzer {
     private void checkJoinTable() throws Exception {
         char token = sqlQueryInput.charAt(this.position);
         if (token != QUERY_END_SYMBOL) {
-            while(maybeJoins(token)) {
+            if (!maybeJoins(token)) {
+                return;
+            }
+            while (true) {
+                final boolean b = maybeJoins(token);
+                if (!b) {
+                    break;
+                }
                 final JoinType joinType = getJoinType(token);
                 if (joinType == null) {
                     return;
@@ -168,7 +183,7 @@ public class SqlAnalyzer {
                     token = getNextTokeSkippingWhiteSpace(token);
                 }
                 query.setJoin(new Join(joinType, joinTable, joinLeftTableKey, joinRightTableKey));
-            };
+            }
         }
     }
 
@@ -225,6 +240,7 @@ public class SqlAnalyzer {
 
         return joinType;
     }
+
     private void checkWhereTableExpressions() {
         try {
             char token = getCharIgnoringRedundantWhitespace(this.position);
@@ -272,7 +288,7 @@ public class SqlAnalyzer {
     }
 
     private void checkOrderBy() throws Exception {
-        if (this.position > QUERY_LENGTH - 1 - ORDER_BY.length() - 1 - ";".length()) {
+        if (this.position >= QUERY_LENGTH - 1 - ORDER_BY.length() - 1 - ";".length()) {
             return;
         }
         char token = getCharIgnoringRedundantWhitespace(this.position);
@@ -425,14 +441,22 @@ public class SqlAnalyzer {
         String leftCondition = parseAndCondition(token);
         result.append(leftCondition);
 
-        if (token == ' ' && this.sqlQueryInput.charAt(position + 1) == 'O' &&
-                this.sqlQueryInput.charAt(position + 2) == 'R' &&
-                this.sqlQueryInput.charAt(position + 3) == ' '
+        if (this.position + 5 >= QUERY_LENGTH) {
+            return result.toString();
+        }
+
+        char currentToken = getNextToken();
+        if (currentToken == ' ' && sqlQueryInput.charAt(position + 1) == ' ') {
+            currentToken = getNextTokeSkippingWhiteSpace(currentToken);
+        }
+        if (currentToken == 'O' && this.sqlQueryInput.charAt(position + 1) == 'R' &&
+                this.sqlQueryInput.charAt(position + 2) == ' '
         ) {
-            this.position += 4;
+            int startPosition = this.position;
+            this.position += 3;
             final char nextToken = getNextToken();
             leftCondition = parseAndCondition(nextToken);
-            result.append(leftCondition);
+            result.append(" ").append(OR).append(startPosition).append(' ').append(leftCondition);
         }
 
         return result.toString();
@@ -452,17 +476,16 @@ public class SqlAnalyzer {
         if (currentToken == ' ' && sqlQueryInput.charAt(position + 1) == ' ') {
             currentToken = getNextTokeSkippingWhiteSpace(currentToken);
         }
-//SELECT  client.id_client AS id_client, client.full_name AS full_name,  client.phone     AS phone FROM room_in_reservation  LEFT JOIN reservation ON reservation.id_reservation = room_in_reservation.id_reservation  RIGHT JOIN client ON client.id_client = reservation.id_client   FULL OUTER JOIN room ON room.id_room = room_in_reservation.id_room_in_reservation   LEFT JOIN room_kind ON room_kind.id_room_kind = room.id_room_kind   INNER JOIN hotel ON hotel.id_hotel = room.id_hotel  WHERE room_kind.name = 'Lux'   AND  hotel.name = 'Altay'G;
         if (currentToken == ' ' && this.sqlQueryInput.charAt(position + 1) == 'A' &&
                 this.sqlQueryInput.charAt(position + 2) == 'N' &&
                 this.sqlQueryInput.charAt(position + 3) == 'D' &&
                 this.sqlQueryInput.charAt(position + 4) == ' '
         ) {
             final int startPosition = this.position;
-            this.position += 5;
+            this.position += AND.length() + 1;
             currentToken = getNextToken();
             leftCondition = parseCondition(currentToken);
-            result.append(" AND ").append(startPosition).append(' ').append(leftCondition);
+            result.append(" " + AND).append(startPosition).append(' ').append(leftCondition);
         }
 
         return result.toString();
@@ -555,8 +578,8 @@ public class SqlAnalyzer {
                         this.sqlQueryInput.charAt(this.position + 3) == 'E') {
                     this.position += 4;
                     currentToken = getNextToken();
-                    final String value = parseOperand(currentToken);
-                    result.append("LIKE ").append(startPosition).append(" ").append(value);
+                    final String operand = parseOperand(currentToken);
+                    result.append("LIKE ").append(startPosition).append(" ").append(operand);
                 } else if (currentToken == 'B' && this.sqlQueryInput.charAt(this.position + 1) == 'E' &&
                         this.sqlQueryInput.charAt(this.position + 2) == 'T' &&
                         this.sqlQueryInput.charAt(this.position + 3) == 'W' &&
@@ -566,11 +589,11 @@ public class SqlAnalyzer {
                         this.sqlQueryInput.charAt(this.position + 7) == ' '
                 ) {
                     this.position += BETWEEN.length();
-                    currentToken  = getCurrentToken();
+                    currentToken = getCurrentToken();
                     String operand = parseOperand(currentToken);
                     currentToken = getCurrentToken();
                     if (currentToken == ' ') {
-                        currentToken= getNextTokeSkippingWhiteSpace(currentToken);
+                        currentToken = getNextTokeSkippingWhiteSpace(currentToken);
                     }
                     result.append(BETWEEN).append(startPosition).append(" ").append(operand);
                     if (currentToken == 'A' &&
@@ -583,7 +606,7 @@ public class SqlAnalyzer {
                         operand = parseOperand(currentToken);
                         result.append(' ').append(operand);
                     } else {
-                        throwExpectedToken(token, " AND ");
+                        throwExpectedToken(token, " " + AND);
                     }
                 }
             }
@@ -773,6 +796,7 @@ public class SqlAnalyzer {
             token = getNextToken();
         }
         do {
+            if (!isQuoted && isKeyword(result.toString())) {}
             result.append(token);
             token = getNextToken();
         } while (isAlphabetCharacter(token) || isDigit(token) || token == '_');
@@ -781,6 +805,10 @@ public class SqlAnalyzer {
         }
 
         return result.toString();
+    }
+
+    private boolean isKeyword(String toString) {
+        return false;
     }
 
     private String parseValue(char token) throws Exception {
